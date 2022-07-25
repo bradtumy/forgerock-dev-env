@@ -10,6 +10,7 @@ Vagrant.configure("2") do |config|
       update-alternatives --config java
     SHELL
 
+    ## build DS config store
     config.vm.define "vm1" do |vm1|
         vm1.vm.box = "ubuntu/focal64"
         vm1.vm.hostname = "ds1.local"
@@ -65,6 +66,7 @@ Vagrant.configure("2") do |config|
         SHELL
       end
 
+      ## build DS cts store 
       config.vm.define "vm2" do |vm2|
         vm2.vm.box = "ubuntu/focal64"
         vm2.vm.hostname = "ds2.local"
@@ -120,6 +122,7 @@ Vagrant.configure("2") do |config|
         SHELL
       end
 
+      ## build DS user store 
       config.vm.define "vm3" do |vm3|
         vm3.vm.box = "ubuntu/focal64"
         vm3.vm.hostname = "ds3.local"
@@ -175,6 +178,7 @@ Vagrant.configure("2") do |config|
         SHELL
       end
 
+      ## build AM instance
       config.vm.define "vm4" do |vm4|
         vm4.vm.box = "ubuntu/focal64"
         vm4.vm.hostname = "am1.local"
@@ -223,6 +227,7 @@ Vagrant.configure("2") do |config|
         SHELL
       end
 
+      ## build IG instance
       config.vm.define "vm5" do |vm5|
         vm5.vm.box = "ubuntu/focal64"
         vm5.vm.hostname = "ig1.local"
