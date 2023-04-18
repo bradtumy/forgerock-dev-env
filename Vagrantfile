@@ -202,7 +202,7 @@ Vagrant.configure("2") do |config|
             sudo systemctl enable --now tomcat
             sudo systemctl status tomcat
             sudo mkdir -p /opt/forgerock/staging
-            sudo cp /vagrant_data/AM* /opt/forgerock/staging/.
+            sudo cp /vagrant_data/staging/AM* /opt/forgerock/staging/.
             sudo unzip /opt/forgerock/staging/AM-7* -d /opt/forgerock/staging/.
             sudo cp -R /opt/forgerock/staging/AM-7*.war /opt/forgerock/staging/sso.war
             sudo mv /opt/forgerock/staging/sso.war /opt/tomcat/webapps/.
