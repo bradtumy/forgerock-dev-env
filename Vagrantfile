@@ -18,17 +18,17 @@ Vagrant.configure("2") do |config|
         vm1.vm.network "forwarded_port", guest: 1636, host: 1636
         vm1.vm.provision "shell", inline: <<-SHELL
             echo "\n--- Running Provision Script -----\n"
-            groupadd ds_user
-            useradd -s /bin/false -g ds_user -d /opt/forgerock/cfg ds_user
+            sudo groupadd ds_user
+            sudo useradd -s /bin/false -g ds_user -d /opt/forgerock/cfg ds_user
             echo "\n---- Setting up Staging area ---\n"
             sudo mkdir -p /opt/forgerock/staging 
-            sudo cp /vagrant_data/DS* /opt/forgerock/staging/.
+            sudo cp /vagrant_data/staging/DS* /opt/forgerock/staging/.
             sudo unzip /opt/forgerock/staging/DS* -d /opt/forgerock/staging/.
             sudo mv /opt/forgerock/staging/opendj /opt/forgerock/opendj
-            chgrp -R ds_user /opt/forgerock/opendj
-            chmod g+rwx /opt/forgerock/opendj
-            chmod g+r /opt/forgerock
-            chown -R ds_user /opt/forgerock/opendj
+            sudo chgrp -R ds_user /opt/forgerock/opendj
+            sudo chmod g+rwx /opt/forgerock/opendj
+            sudo chmod g+r /opt/forgerock
+            sudo chown -R ds_user /opt/forgerock/opendj
             echo "\n---- Creating Deployment Key ---\n"
             DEPLOYMENT_KEY=$(/opt/forgerock/opendj/bin/dskeymgr create-deployment-key --deploymentKeyPassword password --validity "10 years")
             export $DEPLOYMENT_KEY
@@ -67,7 +67,7 @@ Vagrant.configure("2") do |config|
       end
 
       ## build DS cts store 
-      config.vm.define "vm2" do |vm2|
+      config.vm.define "vm2", autostart:false do |vm2|
         vm2.vm.box = "ubuntu/focal64"
         vm2.vm.hostname = "ds2.local"
         vm2.vm.network "private_network", type:"dhcp"
@@ -123,7 +123,7 @@ Vagrant.configure("2") do |config|
       end
 
       ## build DS user store 
-      config.vm.define "vm3" do |vm3|
+      config.vm.define "vm3", autostart:false do |vm3|
         vm3.vm.box = "ubuntu/focal64"
         vm3.vm.hostname = "ds3.local"
         vm3.vm.network "private_network", type:"dhcp"
@@ -206,29 +206,23 @@ Vagrant.configure("2") do |config|
             sudo unzip /opt/forgerock/staging/AM-7* -d /opt/forgerock/staging/.
             sudo cp -R /opt/forgerock/staging/AM-7*.war /opt/forgerock/staging/sso.war
             sudo mv /opt/forgerock/staging/sso.war /opt/tomcat/webapps/.
+            echo "\n----- Importing Keys into AM's Keystore ------\n"
+            echo "\n----- Setup AM's Keystore ----\n"
+            sudo mkdir -p /opt/forgerock/keys
+            sudo cp /usr/lib/jvm/java-11-openjdk-amd64/lib/security/cacerts /opt/forgerock/keys/.
+            sudo chown -R tomcat /opt/forgerock/keys
+            sudo keytool -importcert -file /vagrant_data/ds-cfg-cert.pem -alias cfg-cert -keystore /opt/forgerock/keys/cacerts -storepass changeit -noprompt
+            sudo keytool -importcert -file /vagrant_data/ds-cts-cert.pem -alias cts-cert -keystore /opt/forgerock/keys/cacerts -storepass changeit -noprompt
+            sudo keytool -importcert -file /vagrant_data/ds-user-cert.pem -alias user-cert -keystore /opt/forgerock/keys/cacerts -storepass changeit -noprompt
+            echo "\n----- Export CATALINA OPTS ----\n"
+            export CATALINA_OPTS="$CATALINA_OPTS -Djavax.net.ssl.trustStore=/opt/forgerock/keys/cacerts -Djavax.net.ssl.trustStorePassword=changeit -Djavax.net.ssl.trustStoreType=jks"
             sudo systemctl stop tomcat
             sudo systemctl start tomcat
-            echo "\n----- Importing Keys into AM's Keystore ------\n"
-            echo "\n----- Importing User Store Cert into AM's Keystore ------\n"
-            keytool \
-                -importcert \
-                -file /vagrant_data/ds-user-cert.pem \
-                -keystore /opt/forgerock/tomcat/security/keystores/truststore
-            echo "\n----- Importing CTS Store Cert into AM's Keystore ------\n"
-            keytool \
-                -importcert \
-                -file /vagrant_data/ds-cts-cert.pem \
-                -keystore /opt/forgerock/tomcat/security/keystores/truststore
-            echo "\n----- Importing Config Store Cert into AM's Keystore ------\n"
-            keytool \
-                -importcert \
-                -file /vagrant_data/ds-cfg-cert.pem \
-                -keystore /opt/forgerock/tomcat/security/keystores/truststore
         SHELL
       end
 
       ## build IG instance
-      config.vm.define "vm5" do |vm5|
+      config.vm.define "vm5" , autostart:false do |vm5|
         vm5.vm.box = "ubuntu/focal64"
         vm5.vm.hostname = "ig1.local"
         vm5.vm.network "private_network", type:"dhcp"
